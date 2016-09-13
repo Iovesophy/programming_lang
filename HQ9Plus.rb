@@ -16,6 +16,8 @@ class HQ9Plus
 				print_99_bottles_of_beer
 			when "+"
 				increment
+			when "S"
+				super_command					
 			end
 		end	
 	end
@@ -61,6 +63,10 @@ def print_99_bottles_of_beer
 
 		def increment
 			@count += 1
+		end
+
+		def super_command
+			puts "super"
 		end
 end
 
