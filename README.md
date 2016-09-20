@@ -145,6 +145,120 @@ when ","
 end
 ```
 
+##「[」「]」の実装
+最後に、条件によってジャンプを行う命令の実装をする。  
+「[」命令は、ポインタ位置の数値が０ならば、対応する「]」までジャンプする。
+また、「]」命令は、ポインタの位置の数値が０以外なら「[」までジャンプする。  
+
+###対応するの条件について  
+この条件は少し厄介である。  
+というのも、例えば
+
+```ruby
+[+++[---]---]+++
+```
+というループが二重になっているプログラムがあるとして、「対応する」という条件なので、  
+二つ目の「]」にジャンプしなければならない  
+今回は、簡単なプログラムの実行開始前にあらかじめ全てのジャンプ位置を解析しておくことであるので、それを適用。  
+
+例えば、上のプログラムに対し、ハッシュを用意する。  
+(ジャンプ命令の解析)
+```ruby
+[++ [ --- ] --- ]+ + +
+0123456789101112131415
+
+@jumps = {
+  0 => 12,
+  12 => 0,
+  4 => 8,
+  8 => 4
+  }
+```
+つまり、@tokensのpc番目の命令が「[」だった時、@jumps[pc]を見れば対応する「]」の位置がわかるようにする。  
+もちろん、逆に「]」の位置から「[」がわかることも必要だ。  
+もしもこのような変数を用意できれば、「[」命令と「]」命令は以下のように簡単に実装できる。
+
+```ruby
+def run
+  #(略)
+  
+  while pc < @tokens.size
+    case @tokens[pc]
+    when "+"
+      
+      #(略)
+      
+    when "["
+      if tape[cur] == 0
+       pc = @jumps[pc]
+      end
+    when "]"
+      if tape[cur] != 0
+      pc = @jumps[pc]
+    end
+  end
+  pc += 1
+  end
+  end
+```
+「[」命令を見つけた時は、もしもポインタ位置の値(@tape[cur])が0なら対応する「]」のある位置（@jumps[pc]）に飛ぶ。  
+実に単純だ。
+
+##ジャンプを命令を解析するメソッドについて。
+
+```ruby
+def analyse_jumps(tokens)
+  jumps = {}  
+  starts = []
+  
+  tokens.each_with_index do |c, i|
+    if c == "["
+      starts.push(i)
+    elsif c == "]"
+      raise ProgramError, "「]」が多すぎます" if starts.empty?
+      from = starts.pop
+      to = i
+      
+      jumps[from] = to
+      jumps[to] = from
+    end
+  end
+  raise ProgramError, "「[」が多すぎます" unless stats.empty?
+  
+  jumps
+end
+```
+
+each_with_indexについて  
+```
+each_with_index (Enumerable) 編集   履歴
+標準クラス・モジュール > Enumerable > each_with_index
+
+enum.each_with_index {|item, idx| block }
+each_with_indexメソッドは、要素の数だけブロックを繰り返し実行します。繰り返しごとにブロック引数itemには各要素が入り、idxには0、1、2、...と番号が入ります。
+
+戻り値はレシーバ自身です。Ruby 1.8.7、1.9ではブロックを省略したときはEnumeratorオブジェクトを返します。
+
+animals = ["dog", "cat", "mouse"]
+animals.each_with_index {|anim, i| puts "#{i+1}. #{anim}" }
+1. dog
+2. cat
+3. mouse
+```
+##解析コードのアルゴリズムについて  
+
+* 1、まず、jumpsという名前の空のハッシュと、startsという名前の空の配列を用意する。
+* 2、tokensを１つ見ていく。ここでは命令そのものだけでなく、何番目なのかも知りたいので、Enumerable#each_with_indexを使用。
+* 3、「[」を見つけたら、その位置（i）をstartsの一番最後に追加する（push）。
+* 4、「]」を見つけたら、直前に見つけた「[」の位置をstartsから取り除き(starts.pop)、今見つけた「[」が出てきていない（starts.empty?）時はBrainf*ckプログラムがおかしいのので、ProgramErrorを投げる。    
+popメソッドは、配列の末尾の要素を削除し、その要素を返します。レシーバ自身を変更するメソッドです。配列が空のときはnilを返します。
+* 5、これを最後の命令まで繰り返す。最後まで見終わった後startsが空になっていなければ、「[」が多すぎるので、ProgramErrorをcallする。
+* 6、jumpsを返り値として返す。  
+
+後は、initializeでこのメソッドをcallすればBrainf*ckインタプリタがCompletion。  
+なお、analyzeメソッドはprivateメッソドにすること。
+
+
 
 ####ASCIIコード表
 [Link](http://www9.plala.or.jp/sgwr-t/c_sub/ascii.html)
