@@ -115,7 +115,36 @@ rubyでエラー報告を行うには、例外を使うのが簡単。
 ```ruby
 raise "開始地点より左には移動できません"
 ```
-このように、エラーメッセージを引数に取りKernel#raiseメソッドをcallすれば良い。
+このように、エラーメッセージを引数に取りKernel#raiseメソッドをcallすれば良い。  
+(環境によっては、文字コードに応じて-Kオプションが必要)
+
+ProgramErrorという新たな例外処理の定義
+
+```ruby
+class ProgramError < StandardError
+end
+
+raise ProgramError, "プログラムが間違っているようです"
+```
+により定義できる。  
+またStandardErrorをcallし親クラスに選んだわけは、rescueでキャッチできるのがこのクラスのみであるから。  
+
+参照方法  
+例外ProgramErrorは「class Brainf_ck」の中で定義しているので、Brainf_ckを使う側からは、  
+「Brainf_ck::ProgramError」という名前で参照できる。  
+
+##「.」「,」の実装  
+入出力を行う命令、「.」「,」の実装は以下  
+
+```ruby
+when "."
+  n = (tape[cur] || 0)
+  print n.chr
+when ","
+  tape[cur] = $stdin.getc.org
+end
+```
+
 
 ####ASCIIコード表
 [Link](http://www9.plala.or.jp/sgwr-t/c_sub/ascii.html)
