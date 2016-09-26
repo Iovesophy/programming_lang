@@ -258,6 +258,8 @@ popメソッドは、配列の末尾の要素を削除し、その要素を返�
 後は、initializeでこのメソッドをcallすればBrainf*ckインタプリタがCompletion。  
 なお、analyzeメソッドはprivateメッソドにすること。
 
+##もうひとつの実装方法  
+上ではBrainf*ck
 
 
 ####ASCIIコード表
